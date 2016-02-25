@@ -1,7 +1,8 @@
 # Straight line segment extractor
 
 Simple but efficient/effective line segement detector.
-This detector, used in works listed below, extracts line segments from images more effectively than classical Hough transform.
+This detector, used in works listed below, extracts line segments from images more effectively than classical Hough transform or LSD.
+This detector also has a function that merges noisy-broken short line segments into one segment for more reliable detection.
 
 Please cite one of these papers if you use this code in your research:
 
