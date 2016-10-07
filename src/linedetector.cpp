@@ -1,101 +1,79 @@
-/*
- * linedetector.h
- *
- *  Created on: 2012. 5. 23.
- *  Modified on: 2013. 8. 17.
- *      Author: Jinhan Lee
- */
-
 #include "linedetector.h"
 
-void LineDetector::set( Size sz, float th_dist, int th_length)
+void LineDetector::mergeLines(SEGMENT * seg1, SEGMENT * seg2, SEGMENT * seg_merged)
 {
-  imagewidth = sz.width;
-  imageheight = sz.height;
-  threshold_dist = th_dist;
-  threshold_length = th_length;
-}
+	double xg = 0.0, yg = 0.0;
+	double delta1x = 0.0, delta1y = 0.0, delta2x = 0.0, delta2y = 0.0;
+	float ax = 0, bx = 0, cx = 0, dx = 0;
+	float ay = 0, by = 0, cy = 0, dy = 0;
+	double li = 0.0, lj = 0.0;
+	double thi = 0.0, thj = 0.0, thr = 0.0;
+	double axg = 0.0, bxg = 0.0, cxg = 0.0, dxg = 0.0, delta1xg = 0.0, delta2xg = 0.0;
 
-void LineDetector::mergeLines(SEGMENT * Seg1, SEGMENT * Seg2, SEGMENT * SegMerged)
-{
-	double dXg = 0.0, dYg = 0.0;
-	double dDelta1X = 0.0, dDelta1Y = 0.0, dDelta2X = 0.0, dDelta2Y = 0.0;
-	float fAx = 0, fBx = 0, fCx = 0, fDx = 0;
-	float fAy = 0, fBy = 0, fCy = 0, fDy = 0;
-	double dLi = 0.0, dLj = 0.0;
-	double dThi = 0.0, dThj = 0.0, dThr = 0.0;
-	double dAxg = 0.0, dAyg = 0.0, dBxg = 0.0, dByg = 0.0, dCxg = 0.0, dCyg =
-			0.0, dDxg = 0.0, dDyg = 0.0, dDelta1Xg = 0.0, dDelta2Xg = 0.0;
+	ax = seg1->x1;
+	ay = seg1->y1;
 
-	fAx = Seg1->x1;
-	fAy = Seg1->y1;
+	bx = seg1->x2;
+	by = seg1->y2;
+	cx = seg2->x1;
+	cy = seg2->y1;
 
-	fBx = Seg1->x2;
-	fBy = Seg1->y2;
+	dx = seg2->x2;
+	dy = seg2->y2;
 
-	fCx = Seg2->x1;
-	fCy = Seg2->y1;
+	float dlix = (bx - ax);
+	float dliy = (by - ay);
+	float dljx = (dx - cx);
+	float dljy = (dy - cy);
 
-	fDx = Seg2->x2;
-	fDy = Seg2->y2;
+	li = sqrt((double) (dlix * dlix) + (double) (dliy * dliy));
+	lj = sqrt((double) (dljx * dljx) + (double) (dljy * dljy));
 
-	float fDLix = (fBx - fAx);
-	float fDLiy = (fBy - fAy);
-	float fDLjx = (fDx - fCx);
-	float fDLjy = (fDy - fCy);
+	xg = (li * (double) (ax + bx) + lj * (double) (cx + dx))
+					/ (double) (2.0 * (li + lj));
+	yg = (li * (double) (ay + by) + lj * (double) (cy + dy))
+					/ (double) (2.0 * (li + lj));
 
-	dLi = sqrt((double) (fDLix * fDLix) + (double) (fDLiy * fDLiy));
-	dLj = sqrt((double) (fDLjx * fDLjx) + (double) (fDLjy * fDLjy));
+	if(dlix == 0.0f) thi = CV_PI / 2.0;
+	else thi = atan(dliy / dlix);
 
-	dXg = (dLi * (double) (fAx + fBx) + dLj * (double) (fCx + fDx))
-			/ (double) (2.0 * (dLi + dLj));
-	dYg = (dLi * (double) (fAy + fBy) + dLj * (double) (fCy + fDy))
-			/ (double) (2.0 * (dLi + dLj));
+	if(dljx == 0.0f) thj = CV_PI / 2.0;
+	else thj = atan(dljy / dljx);
 
-	if(fDLix == 0.0f) dThi = CV_PI / 2.0;
-	else dThi = atan(fDLiy / fDLix);
-
-	if(fDLjx == 0.0f) dThj = CV_PI / 2.0;
-	else dThj = atan(fDLjy / fDLjx);
-
-	if (fabs(dThi - dThj) <= CV_PI / 2.0)
+	if (fabs(thi - thj) <= CV_PI / 2.0)
 	{
-		dThr = (dLi * dThi + dLj * dThj) / (dLi + dLj);
+		thr = (li * thi + lj * thj) / (li + lj);
 	}
 	else
 	{
-		double dTmp = dThj - CV_PI * (dThj / fabs(dThj));
-		dThr = dLi * dThi + dLj * dTmp;
-		dThr /= (dLi + dLj);
+		double tmp = thj - CV_PI * (thj / fabs(thj));
+		thr = li * thi + lj * tmp;
+		thr /= (li + lj);
 	}
 
-	dAxg = ((double) fAy - dYg) * sin(dThr) + ((double) fAx - dXg) * cos(dThr);
-	dAyg = ((double) fAy - dYg) * cos(dThr) - ((double) fAx - dXg) * sin(dThr);
+	axg = ((double) ay - yg) * sin(thr) + ((double) ax - xg) * cos(thr);
 
-	dBxg = ((double) fBy - dYg) * sin(dThr) + ((double) fBx - dXg) * cos(dThr);
-	dByg = ((double) fBy - dYg) * cos(dThr) - ((double) fBx - dXg) * sin(dThr);
+	bxg = ((double) by - yg) * sin(thr) + ((double) bx - xg) * cos(thr);
 
-	dCxg = ((double) fCy - dYg) * sin(dThr) + ((double) fCx - dXg) * cos(dThr);
-	dCyg = ((double) fCy - dYg) * cos(dThr) - ((double) fCx - dXg) * sin(dThr);
+	cxg = ((double) cy - yg) * sin(thr) + ((double) cx - xg) * cos(thr);
 
-	dDxg = ((double) fDy - dYg) * sin(dThr) + ((double) fDx - dXg) * cos(dThr);
-	dDyg = ((double) fDy - dYg) * cos(dThr) - ((double) fDx - dXg) * sin(dThr);
+	dxg = ((double) dy - yg) * sin(thr) + ((double) dx - xg) * cos(thr);
 
-  dDelta1Xg = min(dAxg,min(dBxg,min(dCxg,dDxg)));
-  dDelta2Xg = max(dAxg,max(dBxg,max(dCxg,dDxg)));
+	delta1xg = min(axg,min(bxg,min(cxg,dxg)));
+	delta2xg = max(axg,max(bxg,max(cxg,dxg)));
 
-	dDelta1X = dDelta1Xg * cos(dThr) + dXg;
-	dDelta1Y = dDelta1Xg * sin(dThr) + dYg;
-	dDelta2X = dDelta2Xg * cos(dThr) + dXg;
-	dDelta2Y = dDelta2Xg * sin(dThr) + dYg;
+	delta1x = delta1xg * cos(thr) + xg;
+	delta1y = delta1xg * sin(thr) + yg;
+	delta2x = delta2xg * cos(thr) + xg;
+	delta2y = delta2xg * sin(thr) + yg;
 
-	SegMerged->x1 = (float) dDelta1X;
-	SegMerged->y1 = (float) dDelta1Y;
-	SegMerged->x2 = (float) dDelta2X;
-	SegMerged->y2 = (float) dDelta2Y;
+	seg_merged->x1 = (float) delta1x;
+	seg_merged->y1 = (float) delta1y;
+	seg_merged->x2 = (float) delta2x;
+	seg_merged->y2 = (float) delta2y;
 }
 
-double LineDetector::dist_point_line( const Mat & p, Mat & l )
+double LineDetector::distPointLine( const Mat & p, Mat & l )
 {
 	double x, y, w;
 
@@ -133,34 +111,29 @@ bool LineDetector::mergeSegments( SEGMENT * seg1, SEGMENT * seg2, SEGMENT * seg_
 
 	l1 = p1.cross(p2);
 
-	Point2f dSeg1Middle, dSeg2Middle;
-	dSeg1Middle.x = (seg1->x1 + seg1->x2) /2.0f;
-	dSeg1Middle.y = (seg1->y1 + seg1->y2) /2.0f;
-	dSeg2Middle.x = (seg2->x1 + seg2->x2) /2.0f;
-	dSeg2Middle.y = (seg2->y1 + seg2->y2) /2.0f;
+	Point2f seg1mid, seg2mid;
+	seg1mid.x = (seg1->x1 + seg1->x2) /2.0f;
+	seg1mid.y = (seg1->y1 + seg1->y2) /2.0f;
+	seg2mid.x = (seg2->x1 + seg2->x2) /2.0f;
+	seg2mid.y = (seg2->y1 + seg2->y2) /2.0f;
 
-	double dSeg1Length, dSeg2Length;
-	dSeg1Length = sqrt((seg1->x1 - seg1->x2)*(seg1->x1 - seg1->x2)+(seg1->y1 - seg1->y2)*(seg1->y1 - seg1->y2));
-	dSeg2Length = sqrt((seg2->x1 - seg2->x2)*(seg2->x1 - seg2->x2)+(seg2->y1 - seg2->y2)*(seg2->y1 - seg2->y2));
+	double seg1len, seg2len;
+	seg1len = sqrt((seg1->x1 - seg1->x2)*(seg1->x1 - seg1->x2)+(seg1->y1 - seg1->y2)*(seg1->y1 - seg1->y2));
+	seg2len = sqrt((seg2->x1 - seg2->x2)*(seg2->x1 - seg2->x2)+(seg2->y1 - seg2->y2)*(seg2->y1 - seg2->y2));
 
-	double dMiddleDist = sqrt((dSeg1Middle.x - dSeg2Middle.x)*(dSeg1Middle.x - dSeg2Middle.x)
-			+ (dSeg1Middle.y - dSeg2Middle.y)*(dSeg1Middle.y - dSeg2Middle.y));
+	double middist = sqrt((seg1mid.x - seg2mid.x)*(seg1mid.x - seg2mid.x) + (seg1mid.y - seg2mid.y)*(seg1mid.y - seg2mid.y));
 
-	float fAngleDiff = seg1->angle - seg2->angle;
-	fAngleDiff = fabs(fAngleDiff);
-//	if(fAngleDiff > CV_PI / 2.0) fAngleDiff = CV_PI - fAngleDiff;
+	float angdiff = seg1->angle - seg2->angle;
+	angdiff = fabs(angdiff);
 
-	double dist = dist_point_line( ori, l1 );
+	double dist = distPointLine( ori, l1 );
 
 	if ( fabs( dist ) <= threshold_dist * 2.0
-			&& dMiddleDist <= dSeg1Length / 2.0 + dSeg2Length / 2.0 + 20.0
-			&& fAngleDiff <= CV_PI / 180.0f * 5.0f)
-	{
+			&& middist <= seg1len / 2.0 + seg2len / 2.0 + 20.0
+			&& angdiff <= CV_PI / 180.0f * 5.0f) {
 		mergeLines(seg1, seg2, seg2);
 		return true;
-	}
-	else
-	{
+	} else {
 		return false;
 	}
 }
@@ -182,10 +155,10 @@ void LineDetector::incidentPoint( tType * pt, Mat & l )
 	double s = 1.0 / xk.at<double>(2,0);
 	xk.convertTo(xk, -1, s);
 
-  pt->x = (float)xk.at<double>(0,0) < 0.0f ? 0.0f : (float)xk.at<double>(0,0) >=
-    (imagewidth - 1.0f) ? (imagewidth - 1.0f) : (float)xk.at<double>(0,0);
-  pt->y = (float)xk.at<double>(1,0) < 0.0f ? 0.0f : (float)xk.at<double>(1,0) >=
-    (imageheight - 1.0f) ? (imageheight - 1.0f) : (float)xk.at<double>(1,0);
+	pt->x = (float)xk.at<double>(0,0) < 0.0f ? 0.0f : (float)xk.at<double>(0,0)
+			>= (imagewidth - 1.0f) ? (imagewidth - 1.0f) : (float)xk.at<double>(0,0);
+	pt->y = (float)xk.at<double>(1,0) < 0.0f ? 0.0f : (float)xk.at<double>(1,0)
+			>= (imageheight - 1.0f) ? (imageheight - 1.0f) : (float)xk.at<double>(1,0);
 
 }
 
@@ -201,13 +174,12 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 
 	int total = points->size();
 
-	for ( i = 0; i + threshold_length < total; i++ )
-	{
+	for ( i = 0; i + threshold_length < total; i++ ) {
 		ps = points->at(i);
 		pe = points->at(i + threshold_length);
 
-		double a[] = { ps.x, ps.y, 1 };
-		double b[] = { pe.x, pe.y, 1 };
+		double a[] = { (double)ps.x, (double)ps.y, 1 };
+		double b[] = { (double)pe.x, (double)pe.y, 1 };
 		double c[3], d[3];
 
 		Mat p1 = Mat(3, 1, CV_64FC1, a).clone();
@@ -221,8 +193,7 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 		l_points.clear();
 		l_points.push_back(ps);
 
-		for ( j = 1; j < threshold_length; j++ )
-		{
+		for ( j = 1; j < threshold_length; j++ ) {
 			pt.x = points->at(i+j).x;
 			pt.y = points->at(i+j).y;
 
@@ -230,10 +201,9 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 			p.at<double>(1,0) = (double)pt.y;
 			p.at<double>(2,0) = 1.0;
 
-			double dist = dist_point_line( p, l );
+			double dist = distPointLine( p, l );
 
-			if ( fabs( dist ) > threshold_dist )
-			{
+			if ( fabs( dist ) > threshold_dist ) {
 				is_line = false;
 				break;
 			}
@@ -242,9 +212,8 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 
 		// Line check fail, test next point
 		if ( is_line == false )
-		{
 			continue;
-		}
+
 		l_points.push_back(pe);
 
 		Vec4f line;
@@ -262,8 +231,7 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 		incidentPoint( &ps, l );
 
 		// Extending line
-		for ( j = threshold_length + 1; i + j < total; j++ )
-		{
+		for ( j = threshold_length + 1; i + j < total; j++ ) {
 			pt.x = points->at(i+j).x;
 			pt.y = points->at(i+j).y;
 
@@ -271,10 +239,9 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 			p.at<double>(1,0) = (double)pt.y;
 			p.at<double>(2,0) = 1.0;
 
-			double dist = dist_point_line( p, l );
+			double dist = distPointLine( p, l );
 
-			if ( fabs( dist ) > threshold_dist )
-			{
+			if ( fabs( dist ) > threshold_dist ) {
 				j--;
 				break;
 			}
@@ -306,7 +273,7 @@ void LineDetector::extractSegments( vector<Point2i> * points, vector<SEGMENT> * 
 		seg.x2 = e2.x;
 		seg.y2 = e2.y;
 
- 		segments->push_back(seg);
+		segments->push_back(seg);
 		i = i + j;
 	}
 }
@@ -317,13 +284,13 @@ void LineDetector::pointInboardTest(Mat & src, Point2i * pt)
 	pt->y = pt->y <= 5.0f ? 5.0f : pt->y >= src.rows - 5.0f ? src.rows - 5.0f : pt->y;
 }
 
-bool LineDetector::getPointChain( const Mat & img, const Point pt, Point * chained_pt, int & direction, int step )
+bool LineDetector::getPointChain( const Mat & img, const Point pt, Point * chained_pt,
+    int & direction, int step )
 {
 	int ri, ci;
-  int indices[8][2]={ {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1},{-1,0}, {-1,1}, {0,1} };
+	int indices[8][2]={ {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1},{-1,0}, {-1,1}, {0,1} };
 
-	for ( int i = 0; i < 8; i++ )
-	{
+	for ( int i = 0; i < 8; i++ ) {
 		ci = pt.x + indices[i][1];
 		ri = pt.y + indices[i][0];
 
@@ -333,54 +300,46 @@ bool LineDetector::getPointChain( const Mat & img, const Point pt, Point * chain
 		if ( img.at<unsigned char>(ri, ci) == 0 )
 			continue;
 
-		if(step == 0)
-		{
+		if(step == 0) {
 			chained_pt->x = ci;
 			chained_pt->y = ri;
 			direction = i;
 			return true;
-		}
-		else
-		{
-			if(abs(i-direction) <= 2 || abs(i-direction) >= 6)
-			{
+		} else {
+      if(abs(i-direction) <= 2 || abs(i-direction) >= 6)
+      {
 				chained_pt->x = ci;
 				chained_pt->y = ri;
 				direction = i;
 				return true;
-			}
-			else
+			} else
 				continue;
 		}
 	}
 	return false;
 }
 
-void LineDetector::lineDetection( Mat & src, vector<SEGMENT> * segments_all )
+void LineDetector::lineDetection( Mat & src, vector<SEGMENT> & segments_all, bool merge )
 {
 	int r, c;
-  imageheight=src.rows; imagewidth=src.cols;
+	imageheight=src.rows; imagewidth=src.cols;
 
 	vector<Point2i> points;
 	vector<SEGMENT> segments, segments_tmp, segments_tmp2;
 	Mat canny = src.clone();
 	Canny(src, canny, 50, 50, 3);
-//	imshow("edge", canny);
-	for(int i=0; i<src.rows;i++)
-	{
-		for(int j=0; j<src.cols;j++)
-		{
-      if( i < 5 || i > src.rows-5 || j < 5 || j > src.cols - 5)
+
+	for(int i=0; i<src.rows;i++) {
+		for(int j=0; j<src.cols;j++) {
+			if( i < 5 || i > src.rows-5 || j < 5 || j > src.cols - 5)
 				canny.at<unsigned char>(i,j) = 0;
 		}
 	}
 
-	SEGMENT seg, seg1, seg2;//, seg3;
+	SEGMENT seg, seg1, seg2;
 
-	for ( r = 0; r < imageheight; r++ )
-	{
-		for ( c = 0; c < imagewidth; c++ )
-		{
+	for ( r = 0; r < imageheight; r++ ) {
+		for ( c = 0; c < imagewidth; c++ ) {
 			// Find seeds - skip for non-seeds
 			if ( canny.at<unsigned char>(r,c) == 0 )
 				continue;
@@ -395,234 +354,185 @@ void LineDetector::lineDetection( Mat & src, vector<SEGMENT> * segments_all )
 
 			int direction = 0;
 			int step = 0;
-			while (getPointChain( canny, pt, &pt, direction, step))
-			{
+			while (getPointChain( canny, pt, &pt, direction, step)) {
 				points.push_back(pt);
 				step++;
 				canny.at<unsigned char>(pt.y, pt.x) = 0;
 			}
 
-			if ( points.size() < (unsigned int)threshold_length + 1 )
-			{
+			if ( points.size() < (unsigned int)threshold_length + 1 ) {
 				points.clear();
 				continue;
 			}
 
 			extractSegments( &points, &segments );
 
-			if ( segments.size() == 0 )
-			{
+			if ( segments.size() == 0 ) {
 				points.clear();
 				continue;
 			}
-			for ( int i = 0; i < (int)segments.size(); i++ )
-			{
+			for ( int i = 0; i < (int)segments.size(); i++ ) {
 				seg = segments.at(i);
-				float fLength = sqrt((seg.x1 - seg.x2)*(seg.x1 - seg.x2) + (seg.y1 - seg.y2)*(seg.y1 - seg.y2));
-				if(fLength < threshold_length)
-          continue;
+				float length = sqrt((seg.x1 - seg.x2)*(seg.x1 - seg.x2) + (seg.y1 - seg.y2)*(seg.y1 - seg.y2));
+				if(length < threshold_length) continue;
 				if( (seg.x1 <= 5.0f && seg.x2 <= 5.0f)
-					|| (seg.y1 <= 5.0f && seg.y2 <= 5.0f)
-					|| (seg.x1 >= imagewidth - 5.0f && seg.x2 >= imagewidth - 5.0f)
-					|| (seg.y1 >= imageheight - 5.0f && seg.y2 >= imageheight - 5.0f) )
-          continue;
+						|| (seg.y1 <= 5.0f && seg.y2 <= 5.0f)
+						|| (seg.x1 >= imagewidth - 5.0f && seg.x2 >= imagewidth - 5.0f)
+						|| (seg.y1 >= imageheight - 5.0f && seg.y2 >= imageheight - 5.0f) )
+					continue;
 
 				additionalOperationsOnSegments(src, &seg);
-				segments_tmp.push_back(seg);
+        if(!merge) {
+          segments_all.push_back(seg);
+        }
+        segments_tmp.push_back(seg);
 			}
 			points.clear();
 			segments.clear();
 		}
 	}
+  if(!merge)
+    return;
 
-	bool is_merged = false;//, is_merged2 = false;
-
-	while(segments_tmp.size() > 0)
-	{
-
-		if(segments_tmp.size() == 1)
-		{
-			seg1 = segments_tmp.back();
-			segments_tmp.pop_back();
-			segments_tmp2.push_back(seg1);
-			break;
-		}
-		else
-		{
-			seg1 = segments_tmp.back();
-			segments_tmp.pop_back();
-			seg2 = segments_tmp.back();
-			segments_tmp.pop_back();
-
-			is_merged = mergeSegments(&seg1, &seg2, &seg2);
-			if(is_merged == true)
-			{
-				additionalOperationsOnSegments(src, &seg2);
-				segments_tmp.push_back(seg2);
-			}
-			else
-			{
-				segments_tmp.push_back(seg2);
-				segments_tmp2.push_back(seg1);
-			}
-		}
-	}
-
-	bool *IsAdded = new bool[segments_tmp2.size()];
-	memset(IsAdded, false, segments_tmp2.size());
-
-	for(int i = 0; i < (int)segments_tmp2.size(); i++)
-	{
-		seg1 = segments_tmp2.at(i);
-		if(IsAdded[i] == true) continue;
-
-		is_merged = false;
-		for(int j = 0; j < (int)segments_tmp2.size(); j++)
-		{
-			if(i == j || IsAdded[j] == true) continue;
-
-			seg2 = segments_tmp2.at(j);
-
-			is_merged = mergeSegments(&seg1, &seg2, &seg2);
-
-			if(is_merged == true)
-			{
-				additionalOperationsOnSegments(src, &seg2);
-				segments_all->push_back(seg2);
-				IsAdded[j] = true;
-				IsAdded[i] = true;
-			}
-		}
-		if(IsAdded[i] != true)
-		{
-			segments_all->push_back(seg1);
-			IsAdded[i] = true;
-		}
-	}
-	delete[] IsAdded;
-
+  bool is_merged = false;
+  int ith = segments_tmp.size() - 1;
+  int jth = ith - 1;
+  while(true)
+  {
+    seg1 = segments_tmp[ith];
+    seg2 = segments_tmp[jth];
+		is_merged = mergeSegments(&seg1, &seg2, &seg2);
+    if(is_merged == true)
+    {
+      additionalOperationsOnSegments(src, &seg2);
+      vector<SEGMENT>::iterator it = segments_tmp.begin() + ith;
+      *it = seg2;
+      segments_tmp.erase(segments_tmp.begin()+jth);
+      ith--;
+      jth = ith - 1;
+    }
+    else
+    {
+      jth--;
+    }
+    if(jth < 0) {
+      ith--;
+      jth = ith - 1;
+    }
+    if(ith == 1 && jth == 0)
+      break;
+  }
+  segments_all = segments_tmp;
 }
 
 void LineDetector::getAngle(SEGMENT *seg)
 {
-	float fDx = (float)(seg->x2 - seg->x1);
-	float fDy = (float)(seg->y2 - seg->y1);
-	float fTemp = 0.0f;
-	double dAngle=0.0;
+	float dx = (float)(seg->x2 - seg->x1);
+	float dy = (float)(seg->y2 - seg->y1);
+	double ang=0.0;
 
-	if(fDx == 0.0f) {
-		if(fDy > 0)
-			dAngle = CV_PI / 2.0;
+	if(dx == 0.0f) {
+		if(dy > 0)
+			ang = CV_PI / 2.0;
 		else
-			dAngle = -1.0 * CV_PI / 2.0;
+			ang = -1.0 * CV_PI / 2.0;
 	}
-	else if(fDy == 0.0f) {
-		if(fDx > 0)
-			dAngle = 0.0;
+	else if(dy == 0.0f) {
+		if(dx > 0)
+			ang = 0.0;
 		else
-			dAngle = CV_PI;
+			ang = CV_PI;
 	}
-	else if(fDx < 0.0f && fDy > 0.0f)
-		dAngle = CV_PI + atan( fDy/fDx );
-	else if(fDx > 0.0f && fDy < 0.0f)
-		dAngle = 2*CV_PI + atan( fDy/fDx );
-	else if(fDx < 0.0f && fDy < 0.0f)
-		dAngle = CV_PI + atan( fDy/fDx );
+	else if(dx < 0.0f && dy > 0.0f)
+		ang = CV_PI + atan( dy/dx );
+	else if(dx > 0.0f && dy < 0.0f)
+		ang = 2*CV_PI + atan( dy/dx );
+	else if(dx < 0.0f && dy < 0.0f)
+		ang = CV_PI + atan( dy/dx );
 	else
-		dAngle = atan( fDy/fDx );
+		ang = atan( dy/dx );
 
-	if(dAngle > 2.0 * CV_PI)
-		dAngle -= 2.0 * CV_PI;
-	seg->angle = (float)dAngle;
+	if(ang > 2.0 * CV_PI)
+		ang -= 2.0 * CV_PI;
+	seg->angle = (float)ang;
 }
 
 void LineDetector::additionalOperationsOnSegments(Mat & src, SEGMENT * seg)
 {
-	if(seg->x1 == 0.0f && seg->x2 == 0.0f && seg->y1 == 0.0f && seg->y2 == 0.0f) return;
+	if(seg->x1 == 0.0f && seg->x2 == 0.0f && seg->y1 == 0.0f && seg->y2 == 0.0f)
+		return;
 
-	float fDx, fDy, fTemp;
+	getAngle(seg);
+	double ang = (double)seg->angle;
 
-  getAngle(seg);
-  double dAngle = (double)seg->angle;
+	Point2f start = Point2f(seg->x1, seg->y1);
+	Point2f end = Point2f(seg->x2, seg->y2);
 
-	Point2f pStart = Point2f(seg->x1, seg->y1);
-	Point2f pEnd = Point2f(seg->x2, seg->y2);
+	double dx = 0.0, dy = 0.0;
+	dx = (double) end.x - (double) start.x;
+	dy = (double) end.y - (double) start.y;
 
-	double dDx = 0.0, dDy = 0.0;
-	dDx = (double) pEnd.x - (double) pStart.x;
-	dDy = (double) pEnd.y - (double) pStart.y;
+	int num_points = 10;
+	Point2f *points = new Point2f[num_points];
 
-	int iNCP = 10;
-	Point2f *pCP = new Point2f[iNCP];
-
-	pCP[0] = pStart;
-	pCP[iNCP - 1] = pEnd;
-	for (int i = 0; i < iNCP; i++)
-	{
-		if (i == 0 || i == iNCP - 1)
-		{
+	points[0] = start;
+	points[num_points - 1] = end;
+	for (int i = 0; i < num_points; i++) {
+		if (i == 0 || i == num_points - 1)
 			continue;
-		}
-		pCP[i].x = pCP[0].x + (dDx / double(iNCP - 1) * (double) i);
-		pCP[i].y = pCP[0].y + (dDy / double(iNCP - 1) * (double) i);
+		points[i].x = points[0].x + (dx / double(num_points - 1) * (double) i);
+		points[i].y = points[0].y + (dy / double(num_points - 1) * (double) i);
 	}
 
-	Point2i *pCPR = new Point2i[iNCP];
-	Point2i *pCPL = new Point2i[iNCP];
+	Point2i *points_right = new Point2i[num_points];
+	Point2i *points_left = new Point2i[num_points];
+	double gap = 1.0;
 
-	double dGap = 1.0;
-
-	for(int i = 0; i < iNCP; i++)
-	{
-		pCPR[i].x = cvRound(pCP[i].x + dGap*cos(90.0 * CV_PI / 180.0 + dAngle));
-		pCPR[i].y = cvRound(pCP[i].y + dGap*sin(90.0 * CV_PI / 180.0 + dAngle));
-		pCPL[i].x = cvRound(pCP[i].x - dGap*cos(90.0 * CV_PI / 180.0 + dAngle));
-		pCPL[i].y = cvRound(pCP[i].y - dGap*sin(90.0 * CV_PI / 180.0 + dAngle));
-		pointInboardTest(src, &pCPR[i]);
-		pointInboardTest(src, &pCPL[i]);
+	for(int i = 0; i < num_points; i++) {
+		points_right[i].x = cvRound(points[i].x + gap*cos(90.0 * CV_PI / 180.0 + ang));
+		points_right[i].y = cvRound(points[i].y + gap*sin(90.0 * CV_PI / 180.0 + ang));
+		points_left[i].x = cvRound(points[i].x - gap*cos(90.0 * CV_PI / 180.0 + ang));
+		points_left[i].y = cvRound(points[i].y - gap*sin(90.0 * CV_PI / 180.0 + ang));
+		pointInboardTest(src, &points_right[i]);
+		pointInboardTest(src, &points_left[i]);
 	}
 
 	int iR = 0, iL = 0;
-	for(int i = 0; i < iNCP; i++)
-	{
-		iR += src.at<unsigned char>(pCPR[i].y, pCPR[i].x);
-		iL += src.at<unsigned char>(pCPL[i].y, pCPL[i].x);
+	for(int i = 0; i < num_points; i++) { 
+		iR += src.at<unsigned char>(points_right[i].y, points_right[i].x);
+		iL += src.at<unsigned char>(points_left[i].y, points_left[i].x);
 	}
 
 	if(iR > iL)
 	{
-		fTemp = seg->x1; seg->x1 = seg->x2; seg->x2 = fTemp;
-		fTemp = seg->y1; seg->y1 = seg->y2; seg->y2 = fTemp;
-
-		fDx = (float)(seg->x2 - seg->x1);
-		fDy = (float)(seg->y2 - seg->y1);
-
-		dAngle = dAngle + CV_PI;
-		if(dAngle >= 2.0*CV_PI)
-			dAngle = dAngle - 2.0 * CV_PI;
-		seg->angle = (float)dAngle;
+    std::swap(seg->x1, seg->x2);
+    std::swap(seg->y1, seg->y2);
+		ang = ang + CV_PI;
+		if(ang >= 2.0*CV_PI)
+			ang = ang - 2.0 * CV_PI;
+		seg->angle = (float)ang;
 	}
 
-	delete[] pCP; delete[] pCPR; delete[] pCPL;
+	delete[] points; delete[] points_right; delete[] points_left;
 
 	seg->label = init_label++;
 	return;
 }
 
-void LineDetector::drawArrow( Mat & mat, const SEGMENT * seg, Scalar bgr)
+void LineDetector::drawArrow( Mat & mat, const SEGMENT * seg, Scalar bgr, int thickness, bool directed)
 {
 	Point2i p1;
 
-	double dGap = 10.0;
-	double dAngle = (double)seg->angle;
-	double dArrowAng = 30.0;
+	double gap = 10.0;
+	double ang = (double)seg->angle;
+	double arrow_angle = 30.0;
 
-	p1.x = round(seg->x2 - dGap*cos(dArrowAng * CV_PI / 180.0 + dAngle));
-	p1.y = round(seg->y2 - dGap*sin(dArrowAng * CV_PI / 180.0 + dAngle));
+	p1.x = round(seg->x2 - gap*cos(arrow_angle * CV_PI / 180.0 + ang));
+	p1.y = round(seg->y2 - gap*sin(arrow_angle * CV_PI / 180.0 + ang));
 	pointInboardTest(mat, &p1);
 
-	line(mat, Point(round(seg->x1), round(seg->y1)),
-			Point(round(seg->x2), round(seg->y2)), bgr, 1, 1);
-	line(mat, Point(round(seg->x2), round(seg->y2)),
-			p1, bgr, 1, 1);
+  line(mat, Point(round(seg->x1), round(seg->y1)), Point(round(seg->x2),
+        round(seg->y2)), bgr, thickness, 1);
+  if(directed)
+    line(mat, Point(round(seg->x2), round(seg->y2)), p1, bgr, thickness, 1);
 }

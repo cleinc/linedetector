@@ -19,19 +19,16 @@ int main(int argc, char* argv[]) {
   LineDetector ld;
   vector<SEGMENT> lines;
   Mat src_old;
-  ld.init_label=0;
   Mat src = imread(FLAGS_i, 1);
   if(src.cols==0) {
     fprintf(stderr,"cannot open the input file!");
     return 0;
   }
-  ld.set(src.size(), FLAGS_dt, FLAGS_lt);
-  // ld.set(src.size(), FLAGS_len);
 
   Mat src_gray;
   cvtColor(src, src_gray, CV_RGB2GRAY);
   lines.clear();
-  ld.lineDetection(src_gray, &lines);
+  ld.lineDetection(src_gray, lines);
 
   FILE *fptr;
   string outfile;
@@ -82,8 +79,10 @@ int main(int argc, char* argv[]) {
 
   string outimgpath=FLAGS_i+"_labeled.png";
   imwrite(outimgpath, src);
+  cout << outimgpath << " saved. " << endl;
   outimgpath=FLAGS_i+"_only_lines.png";
   imwrite(outimgpath, blank_color);
+  cout << outimgpath << " saved. " << endl;
   cout << "lines.size() = " << lines.size() << endl;
 
   return 0;
