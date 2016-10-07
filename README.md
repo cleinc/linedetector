@@ -18,11 +18,9 @@ Zhang, Guoxuan, et al. "Building a 3-D Line-Based Map Using Stereo SLAM."
 Robotics, IEEE Transactions on 31.6 (2015): 1364-1377.
 
 # Dependency
-Opencv 2.4.x
+Opencv 2.4.x and upper versions
 
 Google Flags 2.1.0 ($ sudo apt-get install libgflags-dev)
-
-We have not tested this code with Opencv 3.x but expect that it will also work with the 3.x version.
 
 # Usage
 
