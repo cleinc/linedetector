@@ -1,3 +1,5 @@
+# This implementation has been imported as an OpenCV extra module (ximgproc)
+
 # Straight line segment extractor
 
 Simple but efficient/effective line segement detector.
