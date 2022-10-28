@@ -1,4 +1,5 @@
 ## This implementation has been imported as an OpenCV extra module (ximgproc)
+https://docs.opencv.org/4.x/df/ded/group__ximgproc__fast__line__detector.html
 
 # Straight line segment extractor
 
