@@ -1,4 +1,4 @@
-# This implementation has been imported as an OpenCV extra module (ximgproc)
+## This implementation has been imported as an OpenCV extra module (ximgproc)
 
 # Straight line segment extractor
 
